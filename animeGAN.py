@@ -17,8 +17,8 @@ slim = tf.contrib.slim
 HEIGHT, WIDTH, CHANNEL = 64, 64, 3
 BATCH_SIZE = 64
 EPOCH = 5000
-version = 'newPokemon'
-newPoke_path = './' + version
+version = 'newAnime'
+newAnime_path = './' + version
 
 def lrelu(x, n, leak=0.2): 
     return tf.maximum(x, leak * x, name=n) 
@@ -26,10 +26,10 @@ def lrelu(x, n, leak=0.2):
 def process_data():   
     current_dir = os.getcwd()
     # parent = os.path.dirname(current_dir)
-    pokemon_dir = os.path.join(current_dir, 'data')
+    anime_dir = os.path.join(current_dir, 'data')
     images = []
-    for each in os.listdir(pokemon_dir):
-        images.append(os.path.join(pokemon_dir,each))
+    for each in os.listdir(anime_dir):
+        images.append(os.path.join(anime_dir,each))
     # print images    
     all_images = tf.convert_to_tensor(images, dtype = tf.string)
 
