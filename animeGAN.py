@@ -1,8 +1,6 @@
-
-
 # -*- coding: utf-8 -*-
 
-# generate new kinds of anime
+# generate new kinds of pokemons
 
 import os
 import tensorflow as tf
@@ -17,25 +15,25 @@ slim = tf.contrib.slim
 HEIGHT, WIDTH, CHANNEL = 128, 128, 3
 BATCH_SIZE = 64
 EPOCH = 5000
-version = 'newAnime'
-newAnime_path = './' + version
+version = 'newPokemon'
+newPoke_path = './' + version
 
 def lrelu(x, n, leak=0.2): 
     return tf.maximum(x, leak * x, name=n) 
-
+ 
 def process_data():   
     current_dir = os.getcwd()
     # parent = os.path.dirname(current_dir)
-    anime_dir = os.path.join(current_dir, 'data')
+    pokemon_dir = os.path.join(current_dir, 'data')
     images = []
-    for each in os.listdir(anime_dir):
-        images.append(os.path.join(anime_dir,each))
+    for each in os.listdir(pokemon_dir):
+        images.append(os.path.join(pokemon_dir,each))
     # print images    
     all_images = tf.convert_to_tensor(images, dtype = tf.string)
-
+    
     images_queue = tf.train.slice_input_producer(
                                         [all_images])
-
+                                        
     content = tf.read_file(images_queue[0])
     image = tf.image.decode_jpeg(content, channels = CHANNEL)
     # sess1 = tf.Session()
@@ -51,10 +49,10 @@ def process_data():
     # image = image + noise
     # image = tf.transpose(image, perm=[2, 0, 1])
     # print image.get_shape()
-
+    
     image = tf.cast(image, tf.float32)
     image = image / 255.0
-
+    
     iamges_batch = tf.train.shuffle_batch(
                                     [image], batch_size = BATCH_SIZE,
                                     num_threads = 4, capacity = 200 + 3* BATCH_SIZE,
@@ -104,7 +102,7 @@ def generator(input, random_dim, is_train, reuse=False):
                                            name='conv5')
         bn5 = tf.contrib.layers.batch_norm(conv5, is_training=is_train, epsilon=1e-5, decay = 0.9,  updates_collections=None, scope='bn5')
         act5 = tf.nn.relu(bn5, name='act5')
-
+        
         #128*128*3
         conv6 = tf.layers.conv2d_transpose(act5, output_dim, kernel_size=[5, 5], strides=[2, 2], padding="SAME",
                                            kernel_initializer=tf.truncated_normal_initializer(stddev=0.02),
@@ -144,12 +142,12 @@ def discriminator(input, is_train, reuse=False):
                                  name='conv4')
         bn4 = tf.contrib.layers.batch_norm(conv4, is_training=is_train, epsilon=1e-5, decay = 0.9,  updates_collections=None, scope='bn4')
         act4 = lrelu(bn4, n='act4')
-
+       
         # start from act4
         dim = int(np.prod(act4.get_shape()[1:]))
         fc1 = tf.reshape(act4, shape=[-1, dim], name='fc1')
-
-
+      
+        
         w2 = tf.get_variable('w2', shape=[fc1.shape[-1], 1], dtype=tf.float32,
                              initializer=tf.truncated_normal_initializer(stddev=0.02))
         b2 = tf.get_variable('b2', shape=[1], dtype=tf.float32,
@@ -164,22 +162,22 @@ def discriminator(input, is_train, reuse=False):
 
 def train():
     random_dim = 100
-
+    
     with tf.variable_scope('input'):
         #real and fake image placholders
         real_image = tf.placeholder(tf.float32, shape = [None, HEIGHT, WIDTH, CHANNEL], name='real_image')
         random_input = tf.placeholder(tf.float32, shape=[None, random_dim], name='rand_input')
         is_train = tf.placeholder(tf.bool, name='is_train')
-
+    
     # wgan
     fake_image = generator(random_input, random_dim, is_train)
-
+    
     real_result = discriminator(real_image, is_train)
     fake_result = discriminator(fake_image, is_train, reuse=True)
-
+    
     d_loss = tf.reduce_mean(fake_result) - tf.reduce_mean(real_result)  # This optimizes the discriminator.
     g_loss = -tf.reduce_mean(fake_result)  # This optimizes the generator.
-
+            
 
     t_vars = tf.trainable_variables()
     d_vars = [var for var in t_vars if 'dis' in var.name]
@@ -189,10 +187,10 @@ def train():
     # clip discriminator weights
     d_clip = [v.assign(tf.clip_by_value(v, -0.01, 0.01)) for v in d_vars]
 
-
+    
     batch_size = BATCH_SIZE
     image_batch, samples_num = process_data()
-
+    
     batch_num = int(samples_num / batch_size)
     total_batch = 0
     sess = tf.Session()
@@ -222,7 +220,7 @@ def train():
                 train_image = sess.run(image_batch)
                 #wgan clip weights
                 sess.run(d_clip)
-
+                
                 # Update the discriminator
                 _, dLoss = sess.run([trainer_d, d_loss],
                                     feed_dict={random_input: train_noise, real_image: train_image, is_train: True})
@@ -234,7 +232,7 @@ def train():
                                     feed_dict={random_input: train_noise, is_train: True})
 
             # print 'train:[%d/%d],d_loss:%f,g_loss:%f' % (i, j, dLoss, gLoss)
-
+            
         # save check point every 500 epoch
         if i%500 == 0:
             if not os.path.exists('./model/' + version):
@@ -249,7 +247,7 @@ def train():
             # imgtest = imgtest * 255.0
             # imgtest.astype(np.uint8)
             save_images(imgtest, [8,8] ,newPoke_path + '/epoch' + str(i) + '.jpg')
-
+            
             print('train:[%d],d_loss:%f,g_loss:%f' % (i, dLoss, gLoss))
     coord.request_stop()
     coord.join(threads)
@@ -261,7 +259,7 @@ def train():
         # real_image = tf.placeholder(tf.float32, shape = [None, HEIGHT, WIDTH, CHANNEL], name='real_image')
         # random_input = tf.placeholder(tf.float32, shape=[None, random_dim], name='rand_input')
         # is_train = tf.placeholder(tf.bool, name='is_train')
-
+    
     # # wgan
     # fake_image = generator(random_input, random_dim, is_train)
     # real_result = discriminator(real_image, is_train)
