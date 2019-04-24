@@ -14,7 +14,7 @@ from utils import *
 
 slim = tf.contrib.slim
 
-HEIGHT, WIDTH, CHANNEL = 64, 64, 3
+HEIGHT, WIDTH, CHANNEL = 128, 128, 3
 BATCH_SIZE = 64
 EPOCH = 5000
 version = 'newAnime'
